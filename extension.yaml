@@ -23,12 +23,9 @@ resources:
       Firebase Test Lab-triggered function that updates a GitHub commit with the
        success/failure status of a test run
     properties:
-      serviceConfig:
-        timeoutSeconds: 10
       eventTrigger:
         eventType: google.testing.testMatrix.complete
         resource: projects/${PROJECT_ID}/testMatrices/{matrixId}
-      runtime: nodejs16
 
 params:
   - param: GITHUB_TOKEN

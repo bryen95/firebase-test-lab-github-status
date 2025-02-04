@@ -1,5 +1,5 @@
 import { Octokit } from '@octokit/rest';
-import { testLab } from 'firebase-functions/v1';
+import { testLab } from "firebase-functions/v1";
 
 // Validate and parse Test Lab event for GitHub status
 function parseTestMatrixEvent(event: testLab.TestMatrix) {

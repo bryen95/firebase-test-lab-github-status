@@ -1,15 +1,4 @@
-<!-- 
-This file provides your users an overview of your extension. All content is optional, but this is the recommended format. Your users will see the contents of this file when they run the `firebase ext:info` command.
-
-Include any important functional details as well as a brief description for any additional setup required by the user (both pre- and post-installation).
-
-Learn more about writing a PREINSTALL.md file in the docs:
-https://firebase.google.com/docs/extensions/publishers/user-documentation#writing-preinstall
--->
-
-Use this extension to send a friendly greeting.
-
-When triggered by an HTTP request, this extension responds with your specified friendly greeting.
+Use this extension to trigger status updates in GitHub, whenever your Firebase Test Lab finish running!
 
 <!-- We recommend keeping the following section to explain how billing for Firebase Extensions works -->
 # Billing
