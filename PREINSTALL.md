@@ -1,6 +1,6 @@
 Use this extension to trigger status updates in GitHub, whenever your Firebase Test Lab finish running!
 
-It is recommonded to use with async Firebase Test Lab runs. The idea is that you can fire off a long-running test suite, and instead of waiting for the result from a costly CI machine instance, this extension will trigger a Cloud Function when an `onComplete` event is emitted by Firebase Test Lab. The Cloud Function will then set the status on the relevant commit for which it was triggered. This should happen first when the Firebase Test Lab run is started (with a status of `PENDING`), then once more when the run completes (with a status of `SUCCESS` or `FAILURE`).
+It is recommonded to use with async Firebase Test Lab runs. The idea is that you can fire off a long-running test suite, and instead of waiting for the result from a costly CI machine instance, this extension will trigger a Cloud Function when an `onComplete` event is emitted by Firebase Test Lab. The Cloud Function will then set the status on the relevant commit for which it was triggered. This should happen when the Firebase Test Lab run completes (with a status of `SUCCESS` or `FAILURE`).
 
 # Billing
 
