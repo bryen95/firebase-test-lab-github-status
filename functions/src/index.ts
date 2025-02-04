@@ -1,24 +1,5 @@
 import { Octokit } from '@octokit/rest';
-import { testLab } from "firebase-functions/v1";
-
-// Validate and parse Test Lab event for GitHub status
-function parseTestMatrixEvent(event: testLab.TestMatrix) {
-
-  // Extract GitHub metadata from test matrix
-  const gitHubMetadata = event.resultStorage?.gcsPath
-    ?.match(/github-(\w+)-(\w+)-([0-9a-f]{40})/)
-    ?.slice(1);
-
-  if (!gitHubMetadata) {
-    throw new Error(`Invalid GitHub metadata payload for test matrix ${event.testMatrixId}`);
-  }
-
-  return {
-    owner: gitHubMetadata[0],
-    repo: gitHubMetadata[1],
-    commitSha: gitHubMetadata[2]
-  };
-}
+import { logger, testLab } from "firebase-functions/v1";
 
 // Determine GitHub status based on test matrix result
 function determineStatus(event: testLab.TestMatrix): 'success' | 'failure' | 'pending' {
@@ -33,26 +14,34 @@ function determineStatus(event: testLab.TestMatrix): 'success' | 'failure' | 'pe
   }
 }
 
-export const testLabGitHubStatusUpdate = testLab.testMatrix().onComplete((matrix, context) =>
+export const testLabGitHubStatusUpdate = testLab.testMatrix().onComplete((matrix, _) =>
   async () => {
     try {
       const octokit = new Octokit({
         auth: process.env.GITHUB_TOKEN
       });
 
-      const { owner, repo, commitSha } = parseTestMatrixEvent(matrix);
+      const owner = process.env.GITHUB_OWNER;
+      const repo = process.env.GITHUB_REPO;
+      const commitSha = matrix.clientInfo.details?.commitSha;
+      if (!commitSha) {
+        logger.log('No commit SHA found in test matrix event');
+        return;
+      }
       const status = determineStatus(matrix);
+      const targetUrl = `https://console.firebase.google.com/project/${process.env.GCP_PROJECT}/testlab/histories/`;
 
       await octokit.repos.createCommitStatus({
         owner,
         repo,
         sha: commitSha,
         state: status,
-        context: 'firebase-test-lab/android-tests',
-        description: 'Firebase Test Lab Instrumentation Tests'
+        target_url: targetUrl,
+        context: 'Firebase Test Lab',
+        description: 'Firebase Test Lab Instrumented Tests'
       });
     } catch (error) {
-      console.error(`GitHub status update failed for matrix ${matrix.testMatrixId}`, error);
+      logger.error(`GitHub status update failed for matrix ${matrix.testMatrixId}`, error);
       throw error;
     }
   }

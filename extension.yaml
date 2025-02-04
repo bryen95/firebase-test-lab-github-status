@@ -34,3 +34,15 @@ params:
       GitHub token with repo:status scope for updating commit statuses
     type: secret
     required: true
+  - param: GITHUB_OWNER
+    label: GitHub Organisation Name
+    description: >-
+      Name of your GitHub organisation (or your username, if a personal account)
+    type: string
+    required: true
+  - param: GITHUB_REPO
+    label: GitHub Repository Name
+    description: >-
+      Name of your GitHub repository
+    type: string
+    required: true
