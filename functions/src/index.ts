@@ -22,14 +22,19 @@ export const testLabGitHubStatusUpdate = testLab.testMatrix().onComplete((matrix
       });
 
       const owner = process.env.GITHUB_OWNER;
+      logger.log(owner);
       const repo = process.env.GITHUB_REPO;
+      logger.log(repo);
       const commitSha = matrix.clientInfo.details?.commitSha;
       if (!commitSha) {
-        logger.log('No commit SHA found in test matrix event');
+        logger.log(`No commit SHA found in test matrix event: ${commitSha}`);
         return;
       }
+      logger.log(commitSha);
       const status = determineStatus(matrix);
+      logger.log(status);
       const targetUrl = `https://console.firebase.google.com/project/${process.env.GCP_PROJECT}/testlab/histories/`;
+      logger.log(targetUrl);
 
       await octokit.repos.createCommitStatus({
         owner,
