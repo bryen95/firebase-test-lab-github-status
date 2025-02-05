@@ -1,13 +1,10 @@
 import { Octokit } from '@octokit/rest';
-import { logger } from "firebase-functions";
-import { defineSecret } from 'firebase-functions/params';
-import { testLab } from "firebase-functions/v2";
+import { logger, testLab } from "firebase-functions/v1";
 
-const ghToken = defineSecret('GITHUB_TOKEN');
-const ghOwner = defineSecret('GITHUB_OWNER');
-const ghRepo = defineSecret('GITHUB_REPO');
+// Determine GitHub status based on test matrix result
+function determineStatus(event: testLab.TestMatrix): 'success' | 'failure' | 'pending' {
+  const { state, outcomeSummary } = event;
 
-function determineStatus(state: string, outcomeSummary: string): 'success' | 'failure' | 'pending' {
   if (state === 'PENDING') return 'pending';
 
   switch (outcomeSummary) {
@@ -17,44 +14,38 @@ function determineStatus(state: string, outcomeSummary: string): 'success' | 'fa
   }
 }
 
-export const testLabGitHubStatusUpdate = testLab.onTestMatrixCompleted(
-  { secrets: [ghToken, ghOwner, ghRepo] },
-  async (event) => {
-    const { testMatrixId, state, outcomeSummary, clientInfo } = event.data;
-
-    logger.log(testMatrixId);
-    logger.log(state);
-    logger.log(outcomeSummary);
-    logger.log(clientInfo.details);
-    logger.log(ghToken.value());
-    logger.log(ghOwner.value());
-    logger.log(ghRepo.value());
-
-    const octokit = new Octokit({ auth: ghToken });
-
-    const commitSha = clientInfo.details['commitSha'];
-    if (commitSha === undefined) {
-      logger.log(`No commit SHA found in test matrix event: ${commitSha}`);
-      return;
-    }
-    logger.log(commitSha);
-    const status = determineStatus(state, outcomeSummary);
-    logger.log(status);
-    const targetUrl = `https://console.firebase.google.com/project/${process.env.GCP_PROJECT}/testlab/histories/`;
-    logger.log(targetUrl);
-
-    octokit.repos.createCommitStatus({
-      owner: ghOwner.value(),
-      repo: ghRepo.value(),
-      sha: commitSha,
-      state: status,
-      target_url: targetUrl,
-      context: 'Firebase Test Lab',
-      description: 'Firebase Test Lab Instrumented Tests'
-    }).catch((error) => {
-      logger.error(`GitHub status update failed for matrix ${testMatrixId}`, error);
-      throw error;
-    })
-
-    return null;
+export const testLabGitHubStatusUpdate = testLab.testMatrix().onComplete((testMatrix) => {
+  const octokit = new Octokit({
+    auth: process.env.GITHUB_TOKEN
   });
+
+  const owner = process.env.GITHUB_OWNER;
+  logger.log(owner);
+  const repo = process.env.GITHUB_REPO;
+  logger.log(repo);
+  const commitSha = testMatrix.clientInfo.details['commitSha'];
+  if (commitSha === undefined) {
+    logger.log(`No commit SHA found in test matrix event: ${commitSha}`);
+    return;
+  }
+  logger.log(commitSha);
+  const status = determineStatus(testMatrix);
+  logger.log(status);
+  const targetUrl = `https://console.firebase.google.com/project/${process.env.GCP_PROJECT}/testlab/histories/`;
+  logger.log(targetUrl);
+
+  octokit.repos.createCommitStatus({
+    owner,
+    repo,
+    sha: commitSha,
+    state: status,
+    target_url: targetUrl,
+    context: 'Firebase Test Lab',
+    description: 'Firebase Test Lab Instrumented Tests'
+  }).catch((error) => {
+    logger.error(`GitHub status update failed for matrix ${testMatrix.testMatrixId}`, error);
+    throw error;
+  })
+
+  return null;
+});
