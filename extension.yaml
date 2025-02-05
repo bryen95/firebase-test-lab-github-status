@@ -18,15 +18,19 @@ billingRequired: true
 
 resources:
   - name: testLabGitHubStatusUpdate
-    type: firebaseextensions.v1beta.function
+    type: firebaseextensions.v1beta.v2function
     description: >-
       Firebase Test Lab-triggered function that updates a GitHub commit with the
        success/failure status of a test run
     properties:
-      runtime: nodejs16
+      buildConfig:
+        runtime: nodejs16
+      serviceConfig:
+        timeoutSeconds: 10
+        availableMemory: 128M
       eventTrigger:
         eventType: google.testing.testMatrix.complete
-        resource: projects/${PROJECT_ID}/testMatrices/{matrixId}
+        triggerRegion: global
 
 params:
   - param: GITHUB_TOKEN
